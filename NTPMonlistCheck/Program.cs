@@ -43,8 +43,9 @@ namespace NTPMonlistCheck
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Could not connect to NTP Server {0} - Check that UDP Port 123 is not being blocked by something like a firewall...", ntpServer.ToString());
-                Console.ReadLine();
                 Console.ResetColor();
+                Console.WriteLine("Press Any key to exit.");
+                Console.ReadKey();
                 Environment.Exit(0); //Exit with a Success code... even though it isnt really.
             }
 
@@ -60,28 +61,27 @@ namespace NTPMonlistCheck
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Did not receive a response from the remote NTP Server {0} - Check that UDP Port 123 is not being blocked by something like a firewall...", ntpServer.ToString());
-                Console.ReadLine();
                 Console.ResetColor();
+                Console.WriteLine("Press Any key to exit.");
+                Console.ReadKey();
                 Environment.Exit(0); //Exit with a Success code... even though it isnt really.
             }
             
-            //Clean up after ourselves           
-            socket.Close();
 
             if (ntpReceive.Count() > 0)
             {
 
                 //Do some magic to convert the NTP response into human readable time
-                ulong intPart = (ulong)ntpData[40] << 24 | (ulong)ntpData[41] << 16 | (ulong)ntpData[42] << 8 | (ulong)ntpData[43];
-                ulong fractPart = (ulong)ntpData[44] << 24 | (ulong)ntpData[45] << 16 | (ulong)ntpData[46] << 8 | (ulong)ntpData[47];
+                ulong intPart = (ulong)ntpReceive[40] << 24 | (ulong)ntpReceive[41] << 16 | (ulong)ntpReceive[42] << 8 | (ulong)ntpReceive[43];
+                ulong fractPart = (ulong)ntpReceive[44] << 24 | (ulong)ntpReceive[45] << 16 | (ulong)ntpReceive[46] << 8 | (ulong)ntpReceive[47];
 
                 var milliseconds = (intPart * 1000) + ((fractPart * 1000) / 0x100000000L);
                 var networkDateTime = (new DateTime(1900, 1, 1)).AddMilliseconds((long)milliseconds);
 
                 Console.WriteLine("NTP Server responded with the following time:");
                 Console.WriteLine(networkDateTime);
-
-                Console.WriteLine("\n Attempting to check if the remote server will return MONLIST information...");
+                
+                Console.WriteLine("\nAttempting to check if the remote server will return MONLIST information...");
 
                 byte[] monlistdata = new byte[] { 0x17, 0x00, 0x03, 0x2a, 0x00, 0x00, 0x00, 0x00 }; //Initialize byte array for MONLIST data we wish to send
                 byte[] monlistdataReceive = new byte[1024]; //Initialize byte array for Monlist we wish to receive
@@ -92,13 +92,15 @@ namespace NTPMonlistCheck
                     Console.WriteLine("Attempting to connect to {0}", ntpServer.ToString());
                     socket.ReceiveTimeout = 5000; //Set Limit of 5 seconds for connection
                     socket.Connect(ipEndPoint);
+                    
                 }
                 catch
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("Could not connect to NTP Server {0} - Check that UDP Port 123 is not being blocked by something like a firewall...", ntpServer.ToString());
-                    Console.ReadLine();
                     Console.ResetColor();
+                    Console.WriteLine("Press Any key to exit.");
+                    Console.ReadKey();
                     Environment.Exit(0); //Exit with a Success code... even though it isnt really.
                 }
 
@@ -111,42 +113,36 @@ namespace NTPMonlistCheck
                 }
                 catch
                 {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("Did not receive a response from the remote NTP Server {0} - Check that UDP Port 123 is not being blocked by something like a firewall...", ntpServer.ToString());
-                    Console.ReadLine();
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("NTP Server {0} is NOT responding to a MON_GETLIST, that's great!", ntpServer.ToString());
                     Console.ResetColor();
-                    Environment.Exit(0); //Exit with a Success code... even though it isnt really.
+                    Console.WriteLine("Press Any key to exit.");
+                    Console.ReadKey();
+                    Environment.Exit(0); //Exit with a Success code
                 }
 
-                //Clean up after ourselves           
+                //Clean up after ourselves and dispose of socket.           
                 socket.Close();
 
                 if (monlistdataReceive[7] == 72) 
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("NTP Server {0} IS returning Monlist information when MON_GETLIST, If you run this NTP server - please check https://www.us-cert.gov/ncas/alerts/TA14-013A", ntpServer.ToString());
-                    Console.ReadLine();
+                    Console.WriteLine("NTP Server {0} IS returning Monlist information when MON_GETLIST, If you run this NTP server - please check https://www.us-cert.gov/ncas/alerts/TA14-013A/", ntpServer.ToString());
+                    Console.WriteLine("Press Any key to exit.");
+                    Console.ReadKey();
                     Console.ResetColor();
                     Environment.Exit(0); //Exit with a Success code.
                 }
-
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine("NTP Server {0} is NOT responding to a MON_GETLIST, that's great!", ntpServer.ToString());
-                    Console.ReadLine();
-                    Console.ResetColor();
-                    Environment.Exit(0); //Exit with a Success code
-                }
-            
+                                            
             }
 
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("No NTP response received from NTP Server {0} - Check that UDP Port 123 is not being blocked by something like a firewall...", ntpServer.ToString());
-                Console.ReadLine();
                 Console.ResetColor();
+                Console.WriteLine("Press Any key to exit.");
+                Console.ReadKey();
                 Environment.Exit(0); //Exit with a Success code... even though it isnt really.
             }
             
