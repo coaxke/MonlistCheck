@@ -11,4 +11,16 @@ The ntpd program is an operating system daemon that sets and maintains the syste
 
 It’s a relatively cheap and easy attack to launch using spoofed UDP based packets from a handful of hosts all the way to highly distributed botnets targeting NTP servers across the world which together can magnify the payload data request by up to 700x, forwarding the NTP response to the target network.
 
-When the UDP service is queried remotely or the monlist command is run locally (ntpdc-c monlist), the service outputs the list of the last 600 queries that were made from different IP addresses. If the attacker spoofs the source address to be the victim's address, then all the responses are sent back to the victim's address. And because the response data is large, the victim's machine may not be able to handle the response, which can cause a denial of service 
+When the UDP service is queried remotely or the monlist command is run locally (ntpdc-c monlist), the service outputs the list of the last 600 queries that were made from different IP addresses. If the attacker spoofs the source address to be the victim's address, then all the responses are sent back to the victim's address. And because the response data is large, the victim's machine may not be able to handle the response, which can cause a denial of service.
+
+##How to disable NTP MON_GETLIST:
+
+As all versions of ntpd prior to 4.2.7 are vulnerable by default, the simplest recommended course of action is to upgrade all versions of ntpd that are publically accessible to at least 4.2.7. However, in cases where it is not possible to upgrade the version of the service, it is possible to disable the monitor functionality in earlier versions of the software.
+To disable “monlist” functionality on a public-facing NTP server that cannot be updated to 4.2.7, add the “noquery” directive to the “restrict default” line in the system’s ntp.conf, as shown below:
+
+```AsciiDoc
+restrict default kod nomodify notrap nopeer noquery
+restrict -6 default kod nomodify notrap nopeer noquery
+```
+
+See: https://www.us-cert.gov/ncas/alerts/TA14-013A
